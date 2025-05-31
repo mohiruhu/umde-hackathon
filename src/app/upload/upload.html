@@ -1,0 +1,8 @@
+<h2>Upload Member File</h2>
+<input type="file" (change)="onFileSelected($event)" />
+<button (click)="upload()" [disabled]="!selectedFile">Upload</button>
+
+<div *ngIf="uploadResponse">
+  <p>{{ uploadResponse }}</p>
+</div>
+
