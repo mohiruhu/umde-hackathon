@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import validate
-from app.routes.upload import router as upload_router  # ✅ using FastAPI-style router
+from routes import validate
+from routes.upload import router as upload_router  # ✅ using FastAPI-style router
+
 
 app = FastAPI(title="UMDE Validator")
 
