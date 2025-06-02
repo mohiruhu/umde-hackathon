@@ -1,9 +1,9 @@
-from rules.rule_diagnosis import DiagnosisRequiredRule
+from rule_registry import discover_rules
 from typing import Dict, Any
 
 class ValidatorEngine:
     def __init__(self):
-        self.rules = [DiagnosisRequiredRule()]  # Add more as needed
+        self.rules = discover_rules()  # Add more as needed
 
     def validate_rows(self, rows: list[dict] , fast_fail: bool = True) -> list[dict]:
         results = []
