@@ -3,6 +3,7 @@ from rules.base import ValidationRule
 
 class DiagnosisRequiredRule:
     name = "DiagnosisRequired"
+    layer = 1  # Field-level check
 
     def validate(self, row: Dict[str, Any]) -> list[str]:
         errors = []
