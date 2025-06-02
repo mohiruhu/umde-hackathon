@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from rules.base import ValidationRule
+from config import RULES_DOC_BASE_URL
 
 class DiagnosisRequiredRule:
     name = "DiagnosisRequired"
