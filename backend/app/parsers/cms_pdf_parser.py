@@ -11,27 +11,33 @@ def extract_trc_rules_from_pdf(pdf_path: str, page_number: int) -> List[Dict]:
     rules = []
     with pdfplumber.open(pdf_path) as pdf:
         page = pdf.pages[page_number - 1]
-        table = page.extract_table()
+        table = page.extract_tables()
 
-        if not table or len(table[0]) < 5:
-            raise ValueError("Expected a 5-column TRC table")
+        if not tables:
+            raise ValueError("No tables found on the page.")        
 
-        headers = table[0]
-        for row in table[1:]:
-            if len(row) < 5:
-                continue
+        for table in tables:
+            if len(table[0]) < 5:
+                continue  # skip malformed tables
 
-            code, rule_type, title, short_def, full_def = row[:5]
+            for row in table[1:]:  # skip header
+                if len(row) < 5:
+                    continue
 
-            rules.append({
-                "rule_id": f"TRC{code.zfill(3)}",
-                "cms_code": code.strip(),
-                "severity": rule_type.strip(),              # e.g., "R"
-                "name": title.strip(),                      # e.g., "Incorrect Birth Date"
-                "description": short_def.strip(),           # e.g., "BAD BIRTH DATE"
-                "definition": full_def.strip(),             # Full definition text
-                "layer": 2
-            })
+                code, rule_type, title, short_def, full_def = row[:5]
+
+                rules.append({
+                    "rule_id": f"TRC{code.zfill(3)}",
+                    "cms_code": code.strip(),
+                    "severity": rule_type.strip(),
+                    "name": title.strip(),
+                    "description": short_def.strip(),
+                    "definition": full_def.strip(),
+                    "layer": 2
+                })
+
+    if not rules:
+        raise ValueError("No valid TRC rules extracted from any table.")
 
     return rules
 
