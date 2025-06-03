@@ -13,25 +13,27 @@ def extract_trc_rules_from_pdf(pdf_path: str, page_number: int) -> List[Dict]:
         page = pdf.pages[page_number - 1]
         table = page.extract_table()
 
-        if not table:
-            raise ValueError(f"No table found on page {page_number}")
+        if not table or len(table[0]) < 5:
+            raise ValueError("Expected a 5-column TRC table")
 
+        headers = table[0]
         for row in table[1:]:
-            if len(row) < 3:
-                continue  # skip malformed rows
-            trc_code, title, description = row[:3]
+            if len(row) < 5:
+                continue
 
-            rule = {
-                "rule_id": f"TRC{trc_code.zfill(3)}",
-                "name": title.strip(),
-                "description": description.strip(),
-                "layer": 2,
-                "cms_code": trc_code.strip()
-            }
-            rules.append(rule)
+            code, rule_type, title, short_def, full_def = row[:5]
+
+            rules.append({
+                "rule_id": f"TRC{code.zfill(3)}",
+                "cms_code": code.strip(),
+                "severity": rule_type.strip(),              # e.g., "R"
+                "name": title.strip(),                      # e.g., "Incorrect Birth Date"
+                "description": short_def.strip(),           # e.g., "BAD BIRTH DATE"
+                "definition": full_def.strip(),             # Full definition text
+                "layer": 2
+            })
 
     return rules
-
 
 # -------- Configurable Runner for Testing/Debugging Only --------
 
