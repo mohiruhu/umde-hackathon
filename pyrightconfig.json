@@ -1,0 +1,5 @@
+{
+  "typeCheckingMode": "strict",
+  "extraPaths": ["backend"],
+  "include": ["backend/app"]
+}
