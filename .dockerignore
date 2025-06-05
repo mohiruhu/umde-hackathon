@@ -1,0 +1,45 @@
+# Byte-compiled / cache
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.log
+
+# Environment and secrets
+.env
+.env.*
+secrets.env
+
+# OS / file system junk
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Frontend build artifacts (if present)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.angular/
+
+# Python virtual environments
+.venv/
+venv/
+
+# Test output
+htmlcov/
+.coverage
+.pytest_cache/
+.tox/
+.cache/
+nosetests.xml
+coverage.xml
+
+# Render logs (just in case)
+render-build.log
