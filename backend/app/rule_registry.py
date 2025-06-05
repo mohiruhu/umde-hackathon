@@ -4,8 +4,8 @@ import inspect
 from types import ModuleType
 from typing import List, cast
 
-from rules.base import ValidationRule
-from services.json_rule_loader import load_rules_from_json, JSONRule
+from backend.app.rules.base import ValidationRule
+from backend.app.services.json_rule_loader import load_rules_from_json, JSONRule
 
 
 def discover_rules(package: str = "rules") -> List[ValidationRule]:

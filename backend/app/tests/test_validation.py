@@ -1,4 +1,4 @@
-from rules.rule_diagnosis import DiagnosisRequiredRule
+from backend.app.rules.rule_diagnosis import DiagnosisRequiredRule
 
 def test_valid_row_passes():
     rule = DiagnosisRequiredRule()
