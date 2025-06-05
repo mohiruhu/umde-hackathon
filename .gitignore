@@ -190,3 +190,6 @@ frontend/typings/
 frontend/tmp/
 frontend/out-tsc/
 node_modules
+
+# Ignore top-level sync script, but not shared tools
+/sync.ps1
