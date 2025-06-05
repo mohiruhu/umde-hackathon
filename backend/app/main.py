@@ -1,13 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from datetime import datetime
+from datetime import datetime, timezone
+from utils.response import error_response  # ✅ use central helper
 
 from routes import validate
-from routes.upload import router as upload_router  # ✅ using FastAPI-style router
-
+from routes.upload import router as upload_router
 
 app = FastAPI(title="UMDE Validator")
 
@@ -20,18 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✅ Error Handling
-def error_response(status_code: int, path: str, error: str, details=None):
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "path": path,
-            "status": status_code,
-            "error": error,
-            "details": details or [],
-        },
-    )
+# ✅ Exception Handlers
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -47,7 +35,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return error_response(
         status_code=exc.status_code,
         path=str(request.url.path),
-        error=exc.detail
+        error=exc.detail,
+        details=[]
     )
 
 @app.exception_handler(Exception)
@@ -59,11 +48,14 @@ async def generic_exception_handler(request: Request, exc: Exception):
         details=[{"message": str(exc)}]
     )
 
-
-# ✅ Register FastAPI routers
+# ✅ Routers
 app.include_router(upload_router, prefix="/upload")
 app.include_router(validate.router, prefix="/validate")
 
+# ✅ Health check
 @app.get("/")
 async def root():
-    return {"message": "UMDE backend is alive 🚀"}
+    return {
+        "message": "UMDE backend is alive 🚀",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
