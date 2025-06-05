@@ -1,4 +1,4 @@
-from rule_registry import discover_rules
+from backend.app.rule_registry import discover_rules
 
 if __name__ == "__main__":
     rules = discover_rules()
