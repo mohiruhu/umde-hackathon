@@ -59,3 +59,13 @@ async def ping ():
         "message": "UMDE backend is alive 🚀",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+# ✅ Friendly root route
+@app.get("/", response_model=None)
+async def root():
+    return {
+        "message": "Welcome to UMDE 🧠 Validator API!",
+        "status": "Try /ping, /upload, or /validate",
+        "docs": "/docs",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
