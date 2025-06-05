@@ -1,16 +1,15 @@
-from typing import Dict, Any
 from rules.base import ValidationRule
-from config import RULES_DOC_BASE_URL
+from typing import List, Dict, Any
 
-class DiagnosisRequiredRule:
-    name = "DiagnosisRequired"
-    rule_id = "RULE-001"
-    layer = 1  # Field-level check
+class DiagnosisCodeRule(ValidationRule):
+    rule_id = "D001"
+    name = "Missing Diagnosis Code"
+    layer = 1
     severity = "error"
-    doc_link = f"{RULES_DOC_BASE_URL}/diagnosis-required"
+    doc_link = "https://docs.cms.gov/errors/d001"
 
-    def validate(self, row: Dict[str, Any]) -> list[str]:
-        errors = []
-        if not row.get("DiagnosisCode"):
-            errors.append("DiagnosisCode is missing")
+    def validate(self, row: Dict[str, Any]) -> List[str]:
+        errors: List[str] = []
+        if not row.get("diagnosis_code"):
+            errors.append("Diagnosis code is missing.")
         return errors
