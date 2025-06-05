@@ -1,0 +1,62 @@
+[
+  {
+    "rule_id": "TRC007",
+    "cms_code": "TRC007",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "Identifier following criteria is not met during MBI",
+    "definition": "",
+    "layer": 2
+  },
+  {
+    "rule_id": "TRC008",
+    "cms_code": "TRC008",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "beneficiary identifier is not found.",
+    "definition": "",
+    "layer": 2
+  },
+  {
+    "rule_id": "TRC004",
+    "cms_code": "TRC004",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "is blank and First Name field is also blank.",
+    "definition": "",
+    "layer": 2
+  },
+  {
+    "rule_id": "TRC004",
+    "cms_code": "TRC004",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "field is also blank.",
+    "definition": "",
+    "layer": 2
+  },
+  {
+    "rule_id": "TRC257",
+    "cms_code": "TRC257",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "date is not formatted correctly or contains",
+    "definition": "",
+    "layer": 2
+  },
+  {
+    "rule_id": "TRC006",
+    "cms_code": "TRC006",
+    "severity": "N/A",
+    "doc_link": "https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf",
+    "name": "Auto-extracted",
+    "description": "is non-blank, formatted correctly, but is less",
+    "definition": "",
+    "layer": 2
+  }
+]

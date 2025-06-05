@@ -1,4 +1,4 @@
-from rule_registry import discover_rules
+from backend.app.rule_registry import discover_rules
 
 def test_rules_are_discoverable():
     rules = discover_rules()

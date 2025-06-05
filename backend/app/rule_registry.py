@@ -1,6 +1,7 @@
 import importlib
 import pkgutil
 import inspect
+import os
 from types import ModuleType
 from typing import List, cast
 
@@ -23,7 +24,9 @@ def discover_rules(package: str = "rules") -> List[ValidationRule]:
 
     # Load external JSON-based rules
     try:
-        json_rules: List[JSONRule] = load_rules_from_json("rules/trc_rules.json")
+        current_dir = os.path.dirname(__file__)
+        rules_path = os.path.join(current_dir, "rules", "trc_rules.json")
+        json_rules: List[JSONRule] = load_rules_from_json(rules_path)
         discovered_rules.extend(json_rules)
     except FileNotFoundError:
         print("[Warning] No JSON rules loaded (rules/trc_rules.json not found)")

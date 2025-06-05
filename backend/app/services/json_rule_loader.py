@@ -10,6 +10,8 @@ class JSONRule(ValidationRule):
         self.description = rule_dict.get("description", "")
         self.layer = rule_dict.get("layer", 1)
         self.cms_code = rule_dict.get("cms_code", "")
+        self.severity = rule_dict.get("severity", "N/A")
+        self.doc_link = rule_dict.get("doc_link", "") 
 
     def validate(self, row: Dict[str, Any]) -> List[str]:
         # Placeholder: JSON-based rules can define behavior later
