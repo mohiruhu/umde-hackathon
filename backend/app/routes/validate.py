@@ -1,9 +1,12 @@
 from fastapi import APIRouter, UploadFile, File
+from typing import List, Dict, Any, Union
 from fastapi.responses import JSONResponse
 import csv
 import io
 
+
 from services.validator_engine import ValidatorEngine
+
 
 
 router = APIRouter()
@@ -14,7 +17,7 @@ async def ping():
     return {"message": "Validator route ready"}
 
 @router.post("/")
-async def validate_file(file: UploadFile = File(...)):
+async def validate_file(file: UploadFile = File(...))-> Union[JSONResponse, Dict[str, Union[str, int, List[Dict[str, Any]]]]]:
     if not file.filename:
         return JSONResponse(status_code=400, content={"error": "No file uploaded"})
 
