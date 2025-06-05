@@ -172,3 +172,21 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Angular / Frontend
+node_modules/
+dist/
+.angular/
+.vscode/
+package-lock.json
+.env.local
+
+# Extra frontend dev cache/logs (optional)
+frontend/.sass-cache/
+frontend/.history/
+frontend/testem.log
+frontend/libpeerconnection.log
+frontend/typings/
+frontend/tmp/
+frontend/out-tsc/
+node_modules
