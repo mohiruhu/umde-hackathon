@@ -1,7 +1,7 @@
-from rules.base import ValidationRule
+from backend.app.rules.base import ValidationRule
 from typing import List, Dict, Any
 
-class DiagnosisCodeRule(ValidationRule):
+class DiagnosisRequiredRule(ValidationRule):
     rule_id = "D001"
     name = "Missing Diagnosis Code"
     layer = 1

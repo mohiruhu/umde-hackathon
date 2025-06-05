@@ -1,6 +1,6 @@
-from rule_registry import discover_rules
+from backend.app.rule_registry import discover_rules
 from typing import List, Dict, Any
-from rules.base import ValidationRule
+from backend.app.rules.base import ValidationRule
 
 class ValidatorEngine:
     def __init__(self):

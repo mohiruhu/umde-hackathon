@@ -5,7 +5,7 @@ import csv
 import io
 
 
-from services.validator_engine import ValidatorEngine
+from backend.app.services.validator_engine import ValidatorEngine
 
 
 
@@ -16,7 +16,7 @@ engine = ValidatorEngine()  # ✅ Create engine instance
 async def ping():
     return {"message": "Validator route ready"}
 
-@router.post("/")
+@router.post("/", response_model=None)
 async def validate_file(file: UploadFile = File(...))-> Union[JSONResponse, Dict[str, Union[str, int, List[Dict[str, Any]]]]]:
     if not file.filename:
         return JSONResponse(status_code=400, content={"error": "No file uploaded"})

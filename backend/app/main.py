@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
-from utils.response import error_response  # ✅ use central helper
+from backend.app.utils.response import error_response  # ✅ use central helper
 
-from routes import validate
-from routes.upload import router as upload_router
+from backend.app.routes import validate
+from backend.app.routes.upload import router as upload_router
 
 app = FastAPI(title="UMDE Validator")
 
@@ -53,8 +53,8 @@ app.include_router(upload_router, prefix="/upload")
 app.include_router(validate.router, prefix="/validate")
 
 # ✅ Health check
-@app.get("/")
-async def root():
+@app.get("/ping", response_model=None)
+async def ping ():
     return {
         "message": "UMDE backend is alive 🚀",
         "timestamp": datetime.now(timezone.utc).isoformat()

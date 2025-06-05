@@ -1,7 +1,7 @@
 import json
 from typing import List, Dict, Any
 
-from rules.base import ValidationRule  # ✅ Required for subclassing
+from backend.app.rules.base import ValidationRule  # ✅ Required for subclassing
 
 class JSONRule(ValidationRule):
     def __init__(self, rule_dict: Dict[str, Any]):
