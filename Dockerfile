@@ -5,7 +5,7 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy only requirements first (for cache efficiency)
-COPY backend/requirements.txt .
+COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip && \
