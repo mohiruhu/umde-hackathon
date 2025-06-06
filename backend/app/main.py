@@ -1,15 +1,27 @@
+from dotenv import load_dotenv
+import os
+
+env_file = os.getenv("ENV_FILE", ".env.local")
+load_dotenv(dotenv_path=env_file)
+
+print("✅ LOCAL_RULE_OUTPUT_PATH:", os.getenv("LOCAL_RULE_OUTPUT_PATH"))
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
 from backend.app.utils.response import error_response  # ✅ use central helper
+
 from backend.app.routes.rule_publish import router as rule_publish_router
 
 from backend.app.routes import validate
 from backend.app.routes.upload import router as upload_router
 
+
 app = FastAPI(title="UMDE Validator")
+
+
 
 # ✅ CORS middleware (FastAPI native)
 app.add_middleware(
