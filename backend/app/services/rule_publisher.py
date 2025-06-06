@@ -19,7 +19,9 @@ def get_s3_client() -> S3Client:
 
 
 def get_output_path(filename: str) -> str:
-    local_folder = os.getenv("LOCAL_RULE_OUTPUT_PATH", "output/rules")
+    local_folder = os.getenv("LOCAL_RULE_OUTPUT_PATH")
+    if not local_folder:
+        raise ValueError("LOCAL_RULE_OUTPUT_PATH is not set in environment variables.")
     os.makedirs(local_folder, exist_ok=True)
     return os.path.join(local_folder, filename)
 
@@ -74,4 +76,5 @@ def publish_rule_metadata() -> None:
         publish_rules_to_s3(bucket, key, serialized)
     else:
         output_path = get_output_path(filename)
+        print(f"✅ Writing rule metadata to: {output_path}")  # ← Add this line
         publish_rules_to_local(output_path, serialized)
