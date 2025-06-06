@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
 from backend.app.utils.response import error_response  # ✅ use central helper
+from backend.app.routes.rule_publish import router as rule_publish_router
 
 from backend.app.routes import validate
 from backend.app.routes.upload import router as upload_router
@@ -51,6 +52,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # ✅ Routers
 app.include_router(upload_router, prefix="/upload")
 app.include_router(validate.router, prefix="/validate")
+app.include_router(rule_publish_router, prefix="/rules")
 
 # ✅ Health check
 @app.get("/ping", response_model=None)

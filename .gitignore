@@ -193,3 +193,10 @@ node_modules
 
 # Ignore top-level sync script, but not shared tools
 /sync.ps1
+
+# Ignore generated rule files
+backend/app/resources/*.json
+
+# Ignore .env files
+.env.production
+.env.local
