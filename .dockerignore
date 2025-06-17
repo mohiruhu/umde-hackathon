@@ -44,9 +44,10 @@ nox/
 .vscode/
 .idea/
 
-# Docs and markdown
-*.md
-README.md
+# Keep top-level markdown
+!README.md
+# Optionally ignore docs/ folder
+docs/**
 
 # Archives
 *.zip

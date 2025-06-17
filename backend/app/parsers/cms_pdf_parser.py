@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path
 from backend.app.parsers.description_cleaner import clean_description
 from backend.app.models.layer_classifier import infer_layer_with_metadata
-from backend.app.models.model_orchestrator_ai import extract_best_rule
+from backend.app.models.model_orchestrator_ai import extract_best_rule_with_fallback
 from backend.app.parsers.trc_or_rule_identifier import detect_trc_id_from_text
 from backend.app.parsers.cms_schema_inferencer import CMSSchemaInferencer
 
@@ -32,30 +32,26 @@ FORCED_HIGH_RISK = {
 
 MEMBER_KEYWORDS = {"BENE", "NAME", "DOB", "ID", "ADDRESS", "GENDER", "SSN"}
 
-
 def extract_targeted_trcs_from_pdf(
     pdf_path: str,
     start_page: int,
     end_page: int,
-    mode: str = "inferencer" ,
+    mode: str = "inferencer",
     manual_review_output_path: Optional[Path] = None
-    
 ) -> List[Dict[str, Any]]:
     extracted: List[Dict[str, Any]] = []
     skipped_rules: List[Dict[str, Any]] = []
-    seen_trcs: set[str] = set()  # define type of seen_trcs as set of strings to resolve type issues
-    deepseek_used = 0
-    local_nlp_used = 0
+    seen_trcs: set[str] = set()
 
     try:
         with pdfplumber.open(pdf_path) as pdf:
             for page_number in range(start_page, end_page + 1):
-                logger.info(f"\n📄 Starting Page {page_number}")
+                logger.info(f"\nStarting Page {page_number}")
                 try:
                     tables = pdf.pages[page_number - 1].extract_tables()
-                    logger.info(f"🔍 Found {len(tables)} tables on page {page_number}")
+                    logger.info(f"Found {len(tables)} tables on page {page_number}")
                 except Exception as err:
-                    logger.warning(f"⚠️ Page {page_number} skipped: {err}")
+                    logger.warning(f"Page {page_number} skipped: {err}")
                     continue
 
                 for table in tables:
@@ -68,83 +64,58 @@ def extract_targeted_trcs_from_pdf(
                         if not trc_id or trc_id in seen_trcs:
                             continue
 
-                        logger.info(f"🔽 Start TRC {trc_id}")
-                        seen_trcs.add(trc_id) 
+                        logger.info(f"Start TRC {trc_id}")
+                        seen_trcs.add(trc_id)
                         desc = row_text
 
                         try:
-                            # Step 1: Classify
-                            try:
-                                source = "deepseek"
-                                deepseek_used += 1
-                            except Exception:
-                                source = "local-nlp"
-                                local_nlp_used += 1
-
-                            rule_struct = extract_best_rule(desc)
-                            if not rule_struct:
-                                logger.warning(f"⚠️ No structure extracted for rule: {desc[:80]}")
+                            result = extract_best_rule_with_fallback(desc)
+                            if result:
+                                rule_struct = result["label"]
+                                source = result["source"]
+                                logger.info(f"Model '{source}' selected for TRC {trc_id}")
+                            else:
+                                logger.warning(f"Rule extraction failed for TRC {trc_id}")
                                 continue
 
                             if "informational" in desc.lower():
-                                logger.info(f"ℹ️ Skipping informational TRC {trc_id}")
+                                logger.info(f"Skipping informational TRC {trc_id}")
                                 continue
 
-                            # Step 2: Structure extraction by mode
-                         
-                            extraction_chain = rule_struct.get("extraction_chain", []) #type:ignore
-
+                            extraction_chain = rule_struct.get("extraction_chain", [])
                             if mode in {"llm", "full"}:
-                                if rule_struct:
-                                    extraction_chain.append("deepseek") #type:ignore
+                                extraction_chain.append(source)
 
-                            if not rule_struct and mode in {"llm", "full"}:
-                                if rule_struct:
-                                    extraction_chain.append("local-llm") #type:ignore
-
-                            if not rule_struct and mode == "inferencer":
-                                rule_struct = CMSSchemaInferencer().infer(row, trc_id) #type:ignore
-                                extraction_chain.append("inferencer") #type:ignore
-
-                            if not rule_struct:
-                                logger.warning(f"❌ Could not extract structured rule for {trc_id}")
-                                skipped_rules.append({
-                                    "trc_id": trc_id,
-                                     "source_page": page_number,
-                                     "classification_source": source,
-                                     "extraction_chain": extraction_chain,
-                                     "raw_row": desc
-                                })
-                                continue
-
-                            # Step 3: Patch missing fields via Inferencer
                             if mode == "full" and extraction_chain and extraction_chain[-1] != "inferencer":
-                                backup = CMSSchemaInferencer().infer(row, trc_id) #type:ignore
+                                filtered_row = [str(cell) for cell in row if cell is not None]
+                                backup = CMSSchemaInferencer().infer(filtered_row, trc_id)
                                 for key in ["field", "severity", "title", "short_definition"]:
-                                    if not rule_struct.get(key) or rule_struct[key] in {"unknown", "", None}: #type:ignore
-                                        rule_struct[key] = backup.get(key)  #type:ignore
+                                    if not rule_struct.get(key) or rule_struct[key] in {"unknown", "", None}:
+                                        backup_value = backup.get(key)
+                                        if backup_value is not None:
+                                            rule_struct[key] = backup_value
 
-                            definition = clean_description(rule_struct.get("definition", desc)) #type:ignore
+                            definition = clean_description(rule_struct.get("definition", desc) or desc)
                             layer, reason, inferred_tags = infer_layer_with_metadata(trc_id, definition)
 
-                            tags = []
+                            tags: List[str] = []
                             if any(k in desc.upper() for k in MEMBER_KEYWORDS):
-                                tags.append("member") #type:ignore
+                                tags.append("member")
                             if trc_id in FORCED_HIGH_RISK:
-                                tags.append("high-risk") #type:ignore
-                            tags = sorted(set(tags + inferred_tags)) #type:ignore
+                                tags.append("high-risk")
+                            tags = sorted(set(tags + inferred_tags))
 
-                            rule : dict[str, str | Any | int | Dict[str, str]] = {
+                            rule: dict[str, str | Any | int | Dict[str, str]] = {
                                 "rule_id": trc_id,
-                                "title": rule_struct.get("title", trc_id), #type:ignore
-                                "short_definition": rule_struct.get("short_definition", desc[:80]), #type:ignore
+                                "title": rule_struct.get("title", trc_id),
+                                "short_definition": rule_struct.get("short_definition", desc[:80]),
                                 "definition": definition,
-                                "field": rule_struct.get("field", "unknown"), #type:ignore
-                                "plan_action": rule_struct.get("plan_action", "review manually"), #type:ignore
+                                "field": rule_struct.get("field", "unknown"),
+                                "plan_action": rule_struct.get("plan_action", "review manually"),
                                 "layer": str(layer),
                                 "tags": tags,
-                                "severity": rule_struct.get("severity", "U"), #type:ignore
-                                "confidence": rule_struct.get("confidence", "partial"), #type:ignore
+                                "severity": rule_struct.get("severity", "U"),
+                                "confidence": rule_struct.get("confidence", "partial"),
                                 "extraction_chain": extraction_chain,
                                 "doc_link": f"https://www.cms.gov/files/document/plan-communications-user-guide-v178.pdf#page={page_number}",
                                 "source_page": page_number,
@@ -153,19 +124,17 @@ def extract_targeted_trcs_from_pdf(
                                 "raw_row": row_text
                             }
 
-                            logger.info(f"✅ Included TRC {trc_id} via {extraction_chain}")
+                            logger.info(f"Included TRC {trc_id} via {extraction_chain}")
                             extracted.append(rule)
 
                         except Exception as e:
-                            logger.warning(f"❌ Failed to extract TRC {trc_id} on page {page_number}: {e}")
+                            logger.warning(f"Failed to extract TRC {trc_id} on page {page_number}: {e}")
 
     except Exception as e:
-        logger.error(f"❌ Failed to open or process PDF: {e}")
+        logger.error(f"Failed to open or process PDF: {e}")
 
-    logger.info("\n📊 Extraction Summary:")
-    logger.info(f"   ├─ DeepSeek used: {deepseek_used}")
-    logger.info(f"   └─ Local NLP fallback: {local_nlp_used}")
-    logger.info(f"📦 Total extracted TRCs: {len(extracted)}")
+    logger.info("\nExtraction Summary:")
+    logger.info(f"Total extracted TRCs: {len(extracted)}")
     if manual_review_output_path:
         write_manual_review_log(skipped_rules, manual_review_output_path)
     return extracted
@@ -197,9 +166,9 @@ def write_trc_rules_json(rules: List[Dict[str, Any]], output_path: Path) -> None
         ]
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(minimal_rules, f, indent=2, ensure_ascii=False)
-        logger.info(f"📝 Saved trc_rules.json to {output_path}")
+        logger.info(f"Saved trc_rules.json to {output_path}")
     except Exception as e:
-        logger.error(f"❌ Failed to write trc_rules.json: {e}")
+        logger.error(f"Failed to write trc_rules.json: {e}")
 
 def write_cms_rules_yml(rules: List[Dict[str, Any]], output_path: Path) -> None:
     try:
@@ -215,14 +184,14 @@ def write_cms_rules_yml(rules: List[Dict[str, Any]], output_path: Path) -> None:
         with output_path.open("w", encoding="utf-8") as f:
             yaml.dump(yml_data, f, sort_keys=False)
 
-        logger.info(f"📝 Saved cms_rules.yml to {output_path}")
+        logger.info(f"Saved cms_rules.yml to {output_path}")
     except Exception as e:
-        logger.error(f"❌ Failed to write cms_rules.yml: {e}")
+        logger.error(f"Failed to write cms_rules.yml: {e}")
 
 def write_manual_review_log(skipped: List[Dict[str, Any]], output_path: Path) -> None:
     try:
         with output_path.open("w", encoding="utf-8") as f:
             json.dump(skipped, f, indent=2, ensure_ascii=False)
-        logger.info(f"📋 Saved manual review log to {output_path} with {len(skipped)} skipped rules")
+        logger.info(f"Saved manual review log to {output_path} with {len(skipped)} skipped rules")
     except Exception as e:
-        logger.error(f"❌ Failed to write manual review log: {e}")
+        logger.error(f"Failed to write manual review log: {e}")
