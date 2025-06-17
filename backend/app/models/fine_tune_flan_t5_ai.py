@@ -99,7 +99,9 @@ def train():
         learning_rate=5e-5,
         weight_decay=0.01,
         load_best_model_at_end=True
-    )    data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)  # type: ignore
+    )    
+    
+    data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)  # type: ignore
 
     trainer = Seq2SeqTrainer(
         model=model,

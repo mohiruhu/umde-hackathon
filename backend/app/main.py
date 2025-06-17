@@ -21,7 +21,10 @@ from backend.app.routes.upload import router as upload_router
 from fastapi.openapi.utils import get_openapi
 
 
-app = FastAPI(title="UMDE Validator")
+app = FastAPI(
+    title="UMDE Validator",
+    version="0.1.0"
+)
 
 def custom_openapi():
     if app.openapi_schema:
