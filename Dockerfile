@@ -21,5 +21,6 @@ EXPOSE $PORT
 # Set PYTHONPATH so backend.app.* works
 ENV PYTHONPATH=backend
 
+
 # Start the app
 CMD ["uvicorn", "app.main:app", "--host=0.0.0.0", "--port=8000"]

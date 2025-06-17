@@ -37,7 +37,7 @@ def serialize_rules(rules: List[ValidationRule]) -> str:
                 "description": getattr(rule, "description", ""),  # Avoid AttributeError
             })
         except Exception as e:
-            logger.warning(f"Failed to serialize rule {rule.rule_id}: {e}")
+            logger.warning(f"Failed to serialize a rule: {e}")
     return json.dumps(result, indent=2)
 
 

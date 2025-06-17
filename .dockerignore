@@ -1,45 +1,54 @@
-# Byte-compiled / cache
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-*.log
-
-# Environment and secrets
-.env
-.env.*
-secrets.env
-
-# OS / file system junk
-.DS_Store
-Thumbs.db
-
 # Git
 .git
 .gitignore
 
-# VSCode / IDE
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.log
+*.sqlite3
+
+# Env files
+.env
+.env.*
+
+# Node/Angular
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Dev/test artifacts
+tests/
+data/
+scripts/
+*.csv
+*.xlsx
+*.ipynb
+*.ps1
+logs/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+nox/
+
+# Keep critical JSON configs
+*.json
+!package.json
+!package-lock.json
+!pyrightconfig.json
+
+# IDEs
 .vscode/
 .idea/
 
-# Frontend build artifacts (if present)
-frontend/node_modules/
-frontend/dist/
-frontend/build/
-frontend/.angular/
+# Keep top-level markdown
+!README.md
+# Optionally ignore docs/ folder
+docs/**
 
-# Python virtual environments
-.venv/
-venv/
-
-# Test output
-htmlcov/
-.coverage
-.pytest_cache/
-.tox/
-.cache/
-nosetests.xml
-coverage.xml
-
-# Render logs (just in case)
-render-build.log
+# Archives
+*.zip
+*.tar.gz
