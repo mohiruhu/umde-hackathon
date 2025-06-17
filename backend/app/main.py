@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 
+
 env_file = os.getenv("ENV_FILE", ".env.local")
 load_dotenv(dotenv_path=env_file)
 
@@ -11,17 +12,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
-from backend.app.utils.response import error_response  # ✅ use central helper
+from backend.app.shared.response import error_response  # ✅ use central helper
 
-from backend.app.routes.rule_publish import router as rule_publish_router
+from app.routes.rule_api_publish import router as rule_publish_router
 
 from backend.app.routes import validate
 from backend.app.routes.upload import router as upload_router
+from fastapi.openapi.utils import get_openapi
 
 
 app = FastAPI(title="UMDE Validator")
 
+def custom_openapi():
+    if app.openapi_schema:
+        del app.openapi_schema  # 🧨 force clear any cached version
+    app.openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        routes=app.routes
+    )
+    return app.openapi_schema
 
+app.openapi = custom_openapi
 
 # ✅ CORS middleware (FastAPI native)
 app.add_middleware(
@@ -65,6 +77,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 app.include_router(upload_router, prefix="/upload")
 app.include_router(validate.router, prefix="/validate")
 app.include_router(rule_publish_router, prefix="/rules")
+
 
 # ✅ Health check
 @app.get("/ping", response_model=None)
