@@ -76,6 +76,13 @@ def extract_targeted_trcs_from_pdf(
                                 logger.info(f"Model '{source}' selected for TRC {trc_id}")
                             else:
                                 logger.warning(f"Rule extraction failed for TRC {trc_id}")
+                                skipped_rules.append({
+                                    "trc_id": trc_id,
+                                    "source_page": page_number,
+                                    "classification_source": "model",
+                                    "extraction_chain": [],
+                                    "raw_row": desc
+                                })
                                 continue
 
                             if "informational" in desc.lower():

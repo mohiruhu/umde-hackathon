@@ -54,6 +54,7 @@ class CMSSchemaInferencer:
                 break
             elif "fail" in part_lower:
                 severity = "F"
+                break
             elif "informational" in part_lower or "note" in part_lower:
                 severity = "I"
         inferred["severity"] = severity
