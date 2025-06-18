@@ -1,9 +1,8 @@
-
 from unittest.mock import patch, MagicMock
-from app.models.deepseek_classifier_ai import classify_with_deepseek
+from backend.app.models.deepseek_classifier_ai import classify_with_deepseek
 
 
-@patch("backend.app.models.deepseek_client_ai.requests.post")
+@patch("backend.app.models.deepseek_classifier_ai.requests.post")
 def test_classify_with_deepseek_include(mock_post: MagicMock):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = [{
@@ -13,7 +12,7 @@ def test_classify_with_deepseek_include(mock_post: MagicMock):
     assert result == "include"
 
 
-@patch("backend.app.models.deepseek_client_ai.requests.post")
+@patch("backend.app.models.deepseek_classifier_ai.requests.post")
 def test_classify_with_deepseek_exclude(mock_post: MagicMock):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = [{
@@ -23,7 +22,7 @@ def test_classify_with_deepseek_exclude(mock_post: MagicMock):
     assert result == "exclude"
 
 
-@patch("backend.app.models.deepseek_client_ai.requests.post")
+@patch("backend.app.models.deepseek_classifier_ai.requests.post")
 def test_classify_with_deepseek_invalid_response(mock_post: MagicMock):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = [{}]  # missing 'generated_text'
@@ -31,13 +30,14 @@ def test_classify_with_deepseek_invalid_response(mock_post: MagicMock):
     assert result is None
 
 
-@patch("backend.app.models.deepseek_client_ai.requests.post")
+@patch("backend.app.models.deepseek_classifier_ai.requests.post")
 def test_classify_with_deepseek_http_error(mock_post: MagicMock):
     mock_post.return_value.status_code = 500
     result = classify_with_deepseek("Trigger HTTP error")
     assert result is None
 
-@patch("backend.app.models.deepseek_client_ai.requests.post")
+
+@patch("backend.app.models.deepseek_classifier_ai.requests.post")
 def test_classify_with_deepseek_trims_output(mock_post: MagicMock):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = [{"generated_text": " INCLUDE\\n"}]
