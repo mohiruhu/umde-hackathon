@@ -55,29 +55,33 @@ def write_rule_file(rule: Dict[str, Any], overwrite: bool = False) -> bool:
         tags = rule.get("tags", [])
         doc_link = rule.get("doc_link", f"https://cms.gov/trc/{rule_id}")
 
-        folder = RULES_BASE_DIR / ("automatic" if layer in AUTO_LAYERS else "manual")
+        is_auto = layer in AUTO_LAYERS
+        folder = RULES_BASE_DIR / ("automatic" if is_auto else "manual")
         folder.mkdir(parents=True, exist_ok=True)
 
         filename = generate_rule_filename(rule_id, name)
         filepath = folder / filename
 
-        if filepath.exists() and not overwrite:
-            logger.warning(f"⚠️ Skipping existing rule (use --overwrite to override): {filepath}")
-            return False
+        # ✅ Conditional overwrite logic
+        if filepath.exists():
+            if is_auto and not overwrite:
+                logger.warning(f"Skipping existing auto rule (use --overwrite to override): {filepath}")
+                return False
+            elif not is_auto:
+                logger.info(f"Manual rule already exists, skipping write: {filepath}")
+                return False
 
         class_name = format_class_name(f"{rule_id}_{name}")
-        
-        # 🔁 KEEP MY VERSION: conditional fallback logic
-        if layer in AUTO_LAYERS:
+
+        if is_auto:
             logic = generate_l1_l2_logic(description, layer)
             if not logic:
-                logger.warning(f"🚫 Skipping L{layer} rule due to failed logic generation: {rule_id}")
+                logger.warning(f"Skipping L{layer} rule due to failed logic generation: {rule_id}")
                 return False
             logic_block = logic + "\n        return []"
         else:
             logic_block = f'"""CMS Description:\n{description}\n\nTODO: Implement logic manually."""\n        return []'
 
-        # ✅ MERGED: Escape quotes + use template
         code = RULE_TEMPLATE.format(
             class_name=class_name,
             rule_id=rule_id,
@@ -91,16 +95,19 @@ def write_rule_file(rule: Dict[str, Any], overwrite: bool = False) -> bool:
             logic=logic_block
         )
 
-        # ✅ buffered write and flush
         with open(filepath, "w", encoding="utf-8", buffering=1) as f:
             f.write(code)
             f.flush()
 
-        logger.info(f"✅ Wrote rule: {filepath.relative_to(RULES_BASE_DIR.parent)}")
+        if is_auto:
+            logger.info(f"Wrote auto rule: {filepath.relative_to(RULES_BASE_DIR.parent)}")
+        else:
+            logger.info(f"Stub generated for {rule_id} under {filepath.parent.name}/")
+
         return True
 
     except Exception as e:
-        logger.error(f"❌ Failed to write rule {rule.get('rule_id', 'UNKNOWN')}: {e}")
+        logger.error(f"Failed to write rule {rule.get('rule_id', 'UNKNOWN')}: {e}")
         return False
 
 def generate_rules(rules: List[Dict[str, Any]], overwrite: bool = False) -> None:
