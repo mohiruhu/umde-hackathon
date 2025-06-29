@@ -1,4 +1,23 @@
-<!-- app.component.html -->
- 
-<router-outlet> </router-outlet>
-<p>✅ Router outlet is loaded</p>
+<!-- App Root Template -->
+<div class="app-container">
+  <nav class="app-nav">
+    <div class="nav-brand">
+      <h1>UMDE Admin Rule Engine</h1>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/admin/rule-landing" routerLinkActive="active">Landing</a>
+      <a routerLink="/admin/rule-review" routerLinkActive="active">Review</a>
+      <a routerLink="/admin/rule-commit" routerLinkActive="active">Commit</a>
+      <a routerLink="/admin/rule-past-runs" routerLinkActive="active">History</a>
+      <a routerLink="/upload" routerLinkActive="active">Upload</a>
+    </div>
+  </nav>
+  
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
+  
+  <footer class="app-footer">
+    <p>&copy; 2025 Universal Medical Data Exchange (UMDE)</p>
+  </footer>
+</div>

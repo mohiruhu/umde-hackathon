@@ -1,0 +1,47 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  h1 {
+    margin: 0;
+    color: #161616;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  nav {
+    margin-top: 0.5rem;
+    
+    a {
+      text-decoration: none;
+      color: #0f62fe;
+      margin-right: 1.5rem;
+      font-weight: 600;
+      
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem;
+}
+
+.app-footer {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1rem 2rem;
+  text-align: center;
+  color: #6f6f6f;
+  font-size: 0.875rem;
+}
