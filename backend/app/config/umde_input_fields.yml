@@ -1,0 +1,31 @@
+version: 2025.06
+
+member_fields:
+  - member_id
+  - dob
+  - gender
+  - member_name
+  - contract_number
+  - plan_id
+  - effective_date
+  - termination_date
+  - disenrollment_reason
+  - transaction_code
+  - status_code
+  - relationship_code
+  - enrollment_source
+  - premium_withhold_option
+  - ssa_rrb_indicator
+  - zip_code
+
+edps_high_risk_fields:
+  - claim_control_number
+  - service_line_from_date
+  - bill_type_code
+  - place_of_service
+  - diagnosis_code
+  - procedure_code
+  - revenue_code
+  - billing_provider_npi
+  - total_charge_amount
+  - units_of_service

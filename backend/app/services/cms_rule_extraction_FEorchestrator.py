@@ -13,21 +13,23 @@ from backend.app.parsers.cms_pdf_parser import (
 from backend.app.parsers.generate_rule_files import generate_rules
 from backend.app.services.rule_publisher import publish_rule_metadata
 from backend.app.services.cms_rule_extraction_FEstate import get_cms_rule_extraction_state, WorkflowStatus
+from backend.app.services.cms_rules_input_conditioning import load_umde_input_fields
 
 logger = logging.getLogger(__name__)
 
 class CMSRuleExtractionOrchestrator:
     def __init__(self) -> None:
-        # Get project root dynamically
-        self.base_dir = Path(__file__).resolve().parents[3]  # Go up to project root
-        self.output_dir = self.base_dir / "data"
-        self.config_dir = self.base_dir / "backend" / "app" / "config"
-        
-        # Ensure output directories exist
+        import os
+        self.base_dir = Path(os.getenv("LOCAL_RULE_OUTPUT_PATH", Path(__file__).resolve().parents[3]))
+
+        self.output_dir = self.base_dir  # Already points to /data
+        self.config_dir = Path(__file__).resolve().parents[1] / "config"
+
         self.output_dir.mkdir(parents=True, exist_ok=True)
         (self.output_dir / "extractedrules").mkdir(parents=True, exist_ok=True)
         (self.output_dir / "trace").mkdir(parents=True, exist_ok=True)
         self.config_dir.mkdir(parents=True, exist_ok=True)
+
     
     async def start_rule_extraction(self, run_id: str, program: str) -> None:
         """Orchestrate the complete extraction workflow with real-time progress"""
@@ -43,6 +45,7 @@ class CMSRuleExtractionOrchestrator:
             
             # Get PDF path for program
             pdf_path = self._get_pdf_path(program)
+            
             if not pdf_path or not Path(pdf_path).exists():
                 logger.warning(f"PDF not found for {program} at {pdf_path}, using mock data with AI simulation")
                 extracted_rules = await self._simulate_ai_extraction_with_progress(run_id, program)
@@ -56,6 +59,10 @@ class CMSRuleExtractionOrchestrator:
             
             # Convert to frontend format
             frontend_rules: List[Dict[str, Any]] = self._convert_to_frontend_format(extracted_rules)
+            if not frontend_rules:
+                logger.warning(f"🛑 No rules extracted for {run_id}. Ending extraction to prevent infinite loop.")
+                state.update_step(run_id, 7, "No rules extracted", WorkflowStatus.REVIEWING)
+                return
             state.set_extracted_rules(run_id, frontend_rules)
             
             # Step 7: Ready for review
@@ -132,15 +139,27 @@ class CMSRuleExtractionOrchestrator:
             # Step 3: Generate cms_rules.yml
             state.update_step(run_id, 3, "Generating CMS rules configuration", WorkflowStatus.GENERATING)
             approved_rules: List[Dict[str, Any]] = self._filter_approved_rules(extracted_rules, decisions)
-            cms_yml_path = await self._step3_generate_cms_yml(approved_rules)
+
+            #filter the member specific rules + 10 high risk EDPS encounter fields
+
+            config = load_umde_input_fields()
+            allowed_fields = set(config["member_fields"] + config["edps_high_risk_fields"])
+
+            filtered_rules = [
+                 r for r in approved_rules if r.get("field") in allowed_fields
+            ]
+
+            logger.info(f"Filtered {len(filtered_rules)} rules from {len(approved_rules)} based on input field config")
+
+            cms_yml_path = await self._step3_generate_cms_yml(filtered_rules)
             
             # Step 4: Generate trc_rules.json and historical file
             state.update_step(run_id, 4, "Generating rule details", WorkflowStatus.GENERATING)
-            trc_json_path, historical_path = await self._step4_generate_rule_jsons(approved_rules)
+            trc_json_path, historical_path = await self._step4_generate_rule_jsons(filtered_rules)
             
             # Step 5: Generate Python rule files
             state.update_step(run_id, 5, "Generating Python validation code", WorkflowStatus.GENERATING)
-            python_files: List[str] = await self._step5_generate_python_rules(approved_rules)
+            python_files: List[str] = await self._step5_generate_python_rules(filtered_rules)
             
             # Step 6: Reload registry and publish
             state.update_step(run_id, 6, "Publishing rule catalog", WorkflowStatus.PUBLISHING)
@@ -300,15 +319,24 @@ class CMSRuleExtractionOrchestrator:
     def _get_pdf_path(self, program: str) -> Optional[str]:
         """Get PDF path for program relative to project root"""
         pdf_mapping: Dict[str, str] = {
-            'edps-institutional': 'data/cms/edps_institutional.pdf',
-            'edps-professional': 'data/cms/edps_professional.pdf',
-            'medicare-advantage': 'data/cms/medicare_advantage.pdf',
-            'medicaid-managed': 'data/cms/medicaid_managed.pdf'
+            'edps-institutional': 'backend/app/resources/CEM 837 Institutional Edits.xlsx',
+            'edps-professional': 'backend/app/resources/CEM 837 Professional Edits.xlsx',
+            'medicare-advantage': 'backend/app/resources/CMS_Plan_Comm_User_Guide_v17.8.pdf',
+            'medicaid-managed': 'backend/app/resources/CMS_Plan_Comm_User_Guide_v17.8.pdf'
         }
         relative_path = pdf_mapping.get(program)
-        if relative_path:
-            return str(self.base_dir / relative_path)
+        full_path = Path(__file__).resolve().parents[3] / relative_path if relative_path else None
+        logger.info(f"[DEBUG] program={program}, relative={relative_path}, full_path={full_path}")
+        if full_path and full_path.exists():
+            return str(full_path)
+        logger.warning(f"[DEBUG] PDF not found at {full_path}")
         return None
+
+        '''
+        if relative_path:
+            return str(Path(relative_path).resolve())
+        return None
+        '''
     
     def _get_mock_extracted_rules(self, program: str) -> List[Dict[str, Any]]:
         """Fallback mock data in your ACTUAL backend format from cms_pdf_parser.py"""

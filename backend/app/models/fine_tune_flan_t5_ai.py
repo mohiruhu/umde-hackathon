@@ -41,7 +41,7 @@ class RuleSample(BaseModel):
 
 # ------------------- LOAD & VALIDATE DATA -------------------
 def load_and_validate_dataset(path: str) -> List[Dict[str, str]]:
-    raw_dataset = load_dataset("json", data_files=path)
+    raw_dataset = load_dataset("json", data_files=path) #type: ignore
     valid_data: List[Dict[str, str]] = []
       # Handle the dataset properly
     train_data = raw_dataset["train"]  # type: ignore
@@ -106,7 +106,7 @@ def train():
     trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_dataset,
+        train_dataset=tokenized_dataset,  # type: ignore
         data_collator=data_collator,  # Removed tokenizer parameter as it's not needed
     )
 

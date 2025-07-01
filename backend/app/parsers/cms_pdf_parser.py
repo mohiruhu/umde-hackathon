@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional, Literal
+from typing import List, Dict, Any, Optional, Literal, Set
 from collections import Counter
 import logging
 import json
@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from jsonschema import validate
 
 from backend.app.models.layer_classifier import infer_layer_with_metadata
-from backend.app.models.model_orchestrator_ai import extract_best_rule_with_fallback
+from backend.app.models.model_orchestrator_ai import extract_rule_with_fallback
 from backend.app.parsers.cms_schema_inferencer import CMSSchemaInferencer
 from backend.app.parsers.rule_chunk_parser import parse_pdf_rules, parse_xlsx_rules
 
@@ -37,7 +37,7 @@ async def process_chunk(
     text = chunk.get("definition") or chunk.get("raw_row", "")
     try:
         # Note: If extract_best_rule_with_fallback is not async, we can wrap it
-        result = extract_best_rule_with_fallback(text)
+        result = extract_rule_with_fallback(text)
         if not result:
             return None
 
@@ -134,8 +134,22 @@ async def extract_chunks_and_generate_rules(
     # BEGIN PARALLELISM + BATCH PROCESSING
     # ================================
     # Create async tasks for parallel processing
-    tasks = [process_chunk(chunk, schema_infer) for chunk in chunks]
+    
+    seen_chunks: Set[str] = set()
+    deduped_chunks: List[Dict[str, Any]] = []
+
+    for chunk in chunks:
+        chunk_id = chunk.get("rule_id") or chunk.get("raw_row", "")[:40]
+        if chunk_id in seen_chunks:
+            continue
+        seen_chunks.add(chunk_id)
+        deduped_chunks.append(chunk)
+
+
+    tasks = [process_chunk(chunk, schema_infer) for chunk in deduped_chunks]
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
+
 
     # Process results
     extracted_rules = []
@@ -177,7 +191,13 @@ async def extract_chunks_and_generate_rules(
 
         logger.info(f"Validation trace log written to {trace_file}")
 
-
+    if extracted_rules:
+        try:
+            write_trc_rules_with_history(extracted_rules, output_dir)
+            write_cms_rules_yml(extracted_rules, output_dir / "cms_rules.yml")
+            logger.info("Successfully wrote trc_rules.json and cms_rules.yml")
+        except Exception as e:
+            logger.error(f"Failed to write rule metadata files: {e}")
     
     return extracted_rules
 
