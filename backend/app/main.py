@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 
-
 env_file = os.getenv("ENV_FILE", ".env.local")
 load_dotenv(dotenv_path=env_file)
 
@@ -10,16 +9,19 @@ print("✅ LOCAL_RULE_OUTPUT_PATH:", os.getenv("LOCAL_RULE_OUTPUT_PATH"))
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+#from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from datetime import datetime, timezone
 from backend.app.shared.response import error_response  # ✅ use central helper
 
-from app.routes.rule_api_publish import router as rule_publish_router
+from backend.app.routes.rule_api_publish import router as rule_publish_router
 
 from backend.app.routes import validate
 from backend.app.routes.upload import router as upload_router
 from fastapi.openapi.utils import get_openapi
 
+# CORRECTED: Import our frontend-compatible API
+from backend.app.routes.cms_rule_extraction import router as rule_management_router
 
 app = FastAPI(
     title="UMDE Validator",
@@ -41,11 +43,14 @@ app.openapi = custom_openapi
 # ✅ CORS middleware (FastAPI native)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with frontend domain in production
+    allow_origins=["http://localhost:4200", "http://localhost:3000"],  # Angular dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static files (optional, for production)
+#app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ✅ Exception Handlers
 
@@ -81,6 +86,8 @@ app.include_router(upload_router, prefix="/upload")
 app.include_router(validate.router, prefix="/validate")
 app.include_router(rule_publish_router, prefix="/rules")
 
+# CORRECTED: Use frontend-compatible API router
+app.include_router(rule_management_router)  # No prefix needed, it's in the router
 
 # ✅ Health check
 @app.get("/ping", response_model=None)
@@ -98,4 +105,11 @@ async def root():
         "status": "Try /ping, /upload, or /validate",
         "docs": "/docs",
         "timestamp": datetime.now(timezone.utc).isoformat()
+
     }
+
+print("\n📋 Registered Routes:")
+for route in app.routes:
+    methods = getattr(route, "methods", ["?"])
+    path = getattr(route, "path", "unknown")
+    print(f"{path} [{', '.join(sorted(methods))}]")

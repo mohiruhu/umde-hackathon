@@ -1,29 +1,3 @@
-enabled_trcs:
-- TRC004
-- TRC007
-- TRC205
-- TRC257
-- TRC258
-- TRC310
+enabled_rules: []
 excluded_trcs: []
-tags:
-  TRC007:
-  - cms-critical
-  - high-risk
-  - member
-  TRC004:
-  - cms-critical
-  - high-risk
-  - member
-  TRC257:
-  - high-risk
-  - member
-  TRC205:
-  - high-risk
-  - member
-  TRC258:
-  - high-risk
-  - member
-  TRC310:
-  - cms-critical
-  - high-risk
+tags: {}

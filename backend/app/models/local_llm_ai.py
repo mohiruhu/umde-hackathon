@@ -62,6 +62,16 @@ def extract_with_local_llm(text_block: str) -> Optional[Dict[str, Any]]:
 
     return None
 
+def mistral_extract_rule(text_block: str) -> Optional[Dict[str, Any]]:
+    """
+    Wrapper for extract_with_local_llm that standardizes output for rule fallback orchestration.
+    """
+    result = extract_with_local_llm(text_block)
+    if result:
+        result["classification_source"] = "mistral"
+        result["extraction_chain"] = ["mistral"]
+        return result
+    return None
 
 def extract_with_confidence(text_block: str) -> Optional[Dict[str, str]]:
     result = extract_with_local_llm(text_block)

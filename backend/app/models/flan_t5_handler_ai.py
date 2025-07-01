@@ -1,4 +1,4 @@
-import logging
+import logging,json
 from functools import lru_cache
 from typing import Optional, Tuple, Any, Dict
 
@@ -36,6 +36,57 @@ def load_model() -> Tuple[Any, Any]:  # type: ignore
 def extract_rule(text: str, max_input_length: int = MAX_INPUT_LENGTH, max_output_length: int = MAX_OUTPUT_LENGTH) -> Optional[str]:
     result = extract_with_confidence(text)
     return result["label"] if result else None
+
+def flan_extract_rule(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Structured rule extractor for fallback orchestration using FLAN-T5.
+    The model is expected to return a JSON string. We parse and validate it.
+    """
+    try:
+        tokenizer, model = load_model()
+
+        logger.info("🧠 Running FLAN-T5 structured rule extraction")
+        prompt = (
+            "Extract the following fields from the CMS validation rule:\n"
+            "- rule_id\n"
+            "- field\n"
+            "- condition\n"
+            "- is_required\n"
+            "- regex_pattern\n"
+            "- value_set_name\n"
+            "- dependent_field\n"
+            "- conditional_on_presence_of\n\n"
+            f"TRC Rule: {text}\n\n"
+            "Respond only in valid JSON."
+        )
+
+        input_ids = tokenizer.encode(
+            prompt,
+            return_tensors="pt",
+            max_length=MAX_INPUT_LENGTH,
+            truncation=True
+        ).to(DEVICE)
+
+        output_ids = model.generate(
+            input_ids,
+            max_length=MAX_OUTPUT_LENGTH,
+            num_beams=4,
+            early_stopping=True
+        )
+
+        decoded = tokenizer.decode(output_ids[0], skip_special_tokens=True).strip()
+        logger.debug(f"FLAN raw decoded: {decoded}")
+
+        if decoded.startswith("{"):
+            parsed = json.loads(decoded)
+            if isinstance(parsed, dict):
+                parsed["classification_source"] = "flan"
+                parsed["extraction_chain"] = ["flan"]
+                return parsed #type: ignore
+        logger.warning("FLAN output was not a valid JSON object.")
+    except Exception as e:
+        logger.warning(f"FLAN structured extraction failed: {e}")
+    return None
 
 
 def extract_with_confidence(text: str, max_input_length: int = MAX_INPUT_LENGTH, max_output_length: int = MAX_OUTPUT_LENGTH) -> Optional[Dict[str, str]]:
